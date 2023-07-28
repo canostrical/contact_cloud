@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Cloud</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <canvas id="canvas"></canvas>
+      <fieldset id="input">
+        <input
+          id="pubkey"
+          type="text"
+          placeholder="npub or hex to zoom to"
+        ></input>
+        <p>Discover the Nostr contact list graph and your own pubkey in it. More info <a href="https://github.com/canostrical/contact_cloud">here</a>.</p>
+      </fieldset>
+    </main>
+    <p id="notsupported">Your browser is not supported. If you are using iOS, there is nothing you can do, sorry.<a href="https://github.com/flekschas/regl-scatterplot/issues/90">Read more</a>. Else update your browser.</p>
+    <a id="href" href=""></a>
+    <script type="module" src="chart.js"></script>
+  </body>
+</html>
