@@ -1,5 +1,5 @@
 /**
- * Bundled by jsDelivr using Rollup v2.79.1 and Terser v5.17.1.
+ * Bundled by jsDelivr using Rollup v2.74.1 and Terser v5.15.1.
  * Original file: /npm/d3-interpolate@3.0.1/src/index.js
  *
  * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files

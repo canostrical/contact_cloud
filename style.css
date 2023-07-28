@@ -2,9 +2,11 @@ body {
     margin: 0;
     padding: 0;
     font-family: Helvetica, sans-serif;
+    overflow: hidden;
 }
 main {
     position: relative;
+    overflow: hidden;
 }
 canvas {
     height: 100vh;
