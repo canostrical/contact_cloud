@@ -10,6 +10,7 @@ import { bech32, base16 } from "./vendor/scure-base-1-1-1.js";
 const run = async () => {
   let colors = [];
   const points = [];
+  let selectedPoint = undefined;
   const hexs = [];
   const getColors = (n) =>
     new Array(n).fill().map((v, i) => color(interpolateRainbow(i / n)).hex());
@@ -28,15 +29,17 @@ const run = async () => {
   const x = scaleLinear().domain([-1.0, 1.0]).range([0, width]);
   const y = scaleLinear().domain([-1.0, 1.0]).range([height, 0]);
 
-  context.globalAlpha = 0.75;
-
-  const drawPoint = (scaleX, scaleY, point) => {
+  const drawPoint = (scaleX, scaleY, point, selected) => {
     context.beginPath();
-    context.fillStyle = colors[point[2]];
+    const [color, size, alpha] = selected
+      ? ["#000000", 10, 1]
+      : [colors[point[2]], 5, 0.75];
+    context.globalAlpha = alpha;
+    context.fillStyle = color;
     const px = scaleX(point[0]);
     const py = scaleY(point[1]);
 
-    context.arc(px, py, 5, 0, 2 * Math.PI, true);
+    context.arc(px, py, size, 0, 2 * Math.PI, true);
     context.fill();
   };
 
@@ -47,8 +50,10 @@ const run = async () => {
     context.clearRect(0, 0, width, height);
 
     points.forEach((point) => {
-      drawPoint(scaleX, scaleY, point);
+      if (selectedPoint !== point) drawPoint(scaleX, scaleY, point, false);
     });
+
+    if (selectedPoint) drawPoint(scaleX, scaleY, selectedPoint, true);
   };
 
   const csv = await text("nostr_graph.csv");
@@ -88,6 +93,10 @@ const run = async () => {
 
   const zoomTo = (point) => {
     console.log(`zooming to ${point}`);
+    selectedPoint = point;
+
+    canvas.call(doZoom.translateTo, x(point[0]), y(point[1]));
+    canvas.call(doZoom.scaleBy, 10);
   };
 
   const processPubkey = () => {
