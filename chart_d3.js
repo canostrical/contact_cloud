@@ -4,14 +4,24 @@ import { text } from "./vendor/d3-fetch-3-0-1.js";
 import { csvParseRows } from "./vendor/d3-dsv-3-0-1.js";
 import { interpolateRainbow } from "./vendor/d3-scale-chromatic-3-0-0.js";
 import { color } from "./vendor/d3-color-3-1-0.js";
-import { zoom, zoomIdentity } from "./vendor/d3-zoom-3-0-0.js";
+import { zoom, zoomIdentity, zoomTransform } from "./vendor/d3-zoom-3-0-0.js";
 import { bech32, base16 } from "./vendor/scure-base-1-1-1.js";
 
-const drawPoint = (context, scaleX, scaleY, point, colors, selected) => {
+// using nostr links until nostrapp.link or alternative works reliably on (my) iPhone
+const isIOS = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const urlPrefix = isIOS ? "nostr:" : "https://nostrapp.link/#";
+
+const href = document.getElementById("href");
+
+const showUser = (hex) => {
+  if (!hex) return;
+
+  href.setAttribute("href", `${urlPrefix}${hexToBech(hex)}`);
+  href.click();
+};
+
+const drawPoint = (context, scaleX, scaleY, point, color, alpha, size) => {
   context.beginPath();
-  const [color, size, alpha] = selected
-    ? ["#000000", 10, 1]
-    : [colors[point[2]], 5, 0.75];
   context.globalAlpha = alpha;
   context.fillStyle = color;
   const px = scaleX(point[0]);
@@ -21,20 +31,20 @@ const drawPoint = (context, scaleX, scaleY, point, colors, selected) => {
   context.fill();
 };
 
-const closestPoint = (points, x, y, eventX, eventY, radius) => {
-  let closestPoint;
+const getClosestIndex = (points, x, y, eventX, eventY, radius) => {
+  let closestIndex;
   let minDistance = Infinity;
-  points.forEach((point) => {
+  points.forEach((point, i) => {
     const pointX = x(point[0]);
     const pointY = y(point[1]);
     const distance = Math.hypot(pointX - eventX, pointY - eventY);
     if (distance < minDistance && radius != null && distance < radius) {
-      closestPoint = point;
+      closestIndex = i;
       minDistance = distance;
     }
   });
 
-  return closestPoint;
+  return closestIndex;
 };
 
 const bechToHex = (npub) =>
@@ -51,7 +61,8 @@ const pubkeyValueAsHex = (input) => {
 const run = async () => {
   let colors = [];
   const points = [];
-  let selectedPoint = undefined;
+  let selectedIndex = undefined;
+  let closestIndex = undefined;
   const hexs = [];
   const getColors = (n) =>
     new Array(n).fill().map((v, i) => color(interpolateRainbow(i / n)).hex());
@@ -69,20 +80,42 @@ const run = async () => {
 
   const x = scaleLinear().domain([-1.0, 1.0]).range([0, width]);
   const y = scaleLinear().domain([-1.0, 1.0]).range([height, 0]);
+  let scaledX = x;
+  let scaledY = y;
 
   const draw = (transform) => {
-    const scaleX = transform.rescaleX(x);
-    const scaleY = transform.rescaleY(y);
+    scaledX = transform.rescaleX(x);
+    scaledY = transform.rescaleY(y);
 
     context.clearRect(0, 0, width, height);
 
+    const selectedPoint = points[selectedIndex];
+    const closestPoint = points[closestIndex];
+
     points.forEach((point) => {
-      if (selectedPoint !== point)
-        drawPoint(context, scaleX, scaleY, point, colors, false);
+      if (selectedPoint !== point && closestPoint !== point)
+        drawPoint(context, scaledX, scaledY, point, colors[point[2]], 0.75, 5);
     });
 
-    if (selectedPoint)
-      drawPoint(context, scaleX, scaleY, selectedPoint, colors, true);
+    if (closestPoint) {
+      drawPoint(
+        context,
+        scaledX,
+        scaledY,
+        closestPoint,
+        colors[closestPoint[2]],
+        1,
+        10
+      );
+    }
+
+    if (selectedPoint) {
+      drawPoint(context, scaledX, scaledY, selectedPoint, "#000000", 1, 10);
+    }
+  };
+
+  const redraw = () => {
+    draw(zoomTransform(node));
   };
 
   const csv = await text("nostr_graph.csv");
@@ -109,9 +142,10 @@ const run = async () => {
 
   const input = document.getElementById("pubkey");
 
-  const zoomTo = (point) => {
+  const zoomTo = (pointIndex) => {
+    const point = points[pointIndex];
     console.log(`zooming to ${point}`);
-    selectedPoint = point;
+    selectedIndex = pointIndex;
 
     canvas.call(doZoom.translateTo, x(point[0]), y(point[1]));
     canvas.call(doZoom.scaleBy, 10);
@@ -119,10 +153,10 @@ const run = async () => {
 
   const processPubkey = () => {
     try {
-      const pointI = hexs.indexOf(pubkeyValueAsHex(input));
+      const pointIndex = hexs.indexOf(pubkeyValueAsHex(input));
 
-      if (pointI > -1) {
-        zoomTo(points[pointI]);
+      if (pointIndex > -1) {
+        zoomTo(pointIndex);
       }
     } catch (error) {
       console.error(error);
@@ -131,10 +165,18 @@ const run = async () => {
   input.addEventListener("change", processPubkey);
 
   node.addEventListener("mousemove", (e) => {
-    const closest = closestPoint(points, x, y, e.clientX, e.clientY, 10);
-    if (closest) {
-    }
+    closestIndex = getClosestIndex(
+      points,
+      scaledX,
+      scaledY,
+      e.clientX,
+      e.clientY,
+      10
+    );
+    redraw();
   });
+
+  node.addEventListener("click", () => showUser(hexs[closestIndex]));
 };
 
 run();
