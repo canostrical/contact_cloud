@@ -7,9 +7,7 @@ import { color } from "./vendor/d3-color-3-1-0.js";
 import { zoom, zoomIdentity, zoomTransform } from "./vendor/d3-zoom-3-0-0.js";
 import { bech32, base16 } from "./vendor/scure-base-1-1-1.js";
 
-// using nostr links until nostrapp.link or alternative works reliably on (my) iPhone
-const isIOS = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const urlPrefix = isIOS ? "nostr:" : "https://nostrapp.link/main/apps/social#";
+const urlPrefix = "https://nostrapp.link/main/apps/social#";
 
 const href = document.getElementById("href");
 
