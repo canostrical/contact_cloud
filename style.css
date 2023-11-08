@@ -4,17 +4,21 @@ body {
     font-family: Helvetica, sans-serif;
     overflow: hidden;
 }
+
 main {
     position: relative;
     overflow: hidden;
 }
+
 canvas {
     height: 100vh;
     width: 100vw;
 }
+
 a {
     color: #3333FF;
 }
+
 #input {
     background-color: white;
     position: absolute;
@@ -24,14 +28,17 @@ a {
     border: 0;
     padding: 8px;
 }
+
 #input p {
     margin: 0;
     padding-left: 8px;
     padding-top: 4px;
 }
+
 #href {
     display: none;
 }
+
 #pubkey {
     box-sizing: border-box;
     width: 100%;
@@ -40,6 +47,7 @@ a {
     padding: 8px;
     font-size: 16px;
 }
+
 #notsupported {
     display: none;
     background-color: white;
